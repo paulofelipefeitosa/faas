@@ -72,6 +72,8 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 
 	log.Println("Forking fprocess.")
 
+	forkTime := time.Now()
+
 	targetCmd := exec.Command(parts[0], parts[1:]...)
 
 	envs := getAdditionalEnvs(config, r, method)
@@ -202,6 +204,7 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 	execDuration := time.Since(startTime).Seconds()
 	if ri.headerWritten == false {
 		w.Header().Set("X-Duration-Seconds", fmt.Sprintf("%f", execDuration))
+		w.Header().Set("X-Fork-Time", fmt.Sprintf("%f", forkTime))
 		ri.headerWritten = true
 		w.WriteHeader(200)
 		w.Write(out)
