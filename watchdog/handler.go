@@ -59,7 +59,7 @@ func debugHeaders(source *http.Header, direction string) {
 	}
 }
 
-func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request, method string) {
+func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request, method string, readyTime *time.Time) {
 	startTime := time.Now()
 
 	parts := strings.Split(config.faasProcess, " ")
@@ -205,6 +205,7 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 	if ri.headerWritten == false {
 		w.Header().Set("X-Duration-Seconds", fmt.Sprintf("%f", execDuration))
 		w.Header().Set("X-Fork-Time", fmt.Sprintf("%f", forkTime))
+		w.Header().Set("X-Watchdog-Startup-Time", fmt.Sprintf("%f", readyTime))
 		ri.headerWritten = true
 		w.WriteHeader(200)
 		w.Write(out)
@@ -298,7 +299,7 @@ func makeHealthHandler() func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func makeRequestHandler(config *WatchdogConfig) func(http.ResponseWriter, *http.Request) {
+func makeRequestHandler(config *WatchdogConfig, readyTime *time.Time) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case
@@ -307,7 +308,7 @@ func makeRequestHandler(config *WatchdogConfig) func(http.ResponseWriter, *http.
 			http.MethodPatch,
 			http.MethodDelete,
 			http.MethodGet:
-			pipeRequest(config, w, r, r.Method)
+			pipeRequest(config, w, r, r.Method, readyTime)
 			break
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)

@@ -28,6 +28,7 @@ var (
 )
 
 func main() {
+	readyTime := time.Now()
 	flag.BoolVar(&versionFlag, "version", false, "Print the version and exit")
 
 	flag.Parse()
@@ -60,7 +61,7 @@ func main() {
 
 	log.Printf("Read/write timeout: %s, %s. Port: %d\n", readTimeout, writeTimeout, config.port)
 	http.HandleFunc("/_/health", makeHealthHandler())
-	http.HandleFunc("/", makeRequestHandler(&config))
+	http.HandleFunc("/", makeRequestHandler(&config, &readyTime))
 
 	shutdownTimeout := config.writeTimeout
 
