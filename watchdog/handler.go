@@ -204,8 +204,8 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 	execDuration := time.Since(startTime).Seconds()
 	if ri.headerWritten == false {
 		w.Header().Set("X-Duration-Seconds", fmt.Sprintf("%f", execDuration))
-		w.Header().Set("X-Fork-Time", fmt.Sprintf("%f", time.Since(forkTime).Seconds()))
-		w.Header().Set("X-Watchdog-Startup-Time", fmt.Sprintf("%f", time.Since(*readyTime).Seconds()))
+		w.Header().Set("X-Fork-Time", fmt.Sprintf("%d", forkTime.UTC().UnixNano()))
+		w.Header().Set("X-Watchdog-Startup-Time", fmt.Sprintf("%d", startTime.UTC().UnixNano()))
 		ri.headerWritten = true
 		w.WriteHeader(200)
 		w.Write(out)
