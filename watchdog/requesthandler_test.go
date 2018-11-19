@@ -19,7 +19,8 @@ import (
 
 func TestHandler_make(t *testing.T) {
 	config := WatchdogConfig{}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 
 	if handler == nil {
 		t.Fail()
@@ -41,7 +42,8 @@ func TestHandler_HasCustomHeaderInFunction_WithCgi_Mode(t *testing.T) {
 		faasProcess: "env",
 		cgiHeaders:  true,
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -80,7 +82,8 @@ func TestHandler_HasCustomHeaderInFunction_WithCgiMode_AndBody(t *testing.T) {
 		faasProcess: "env",
 		cgiHeaders:  true,
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -118,7 +121,8 @@ func TestHandler_HasHostHeaderWhenSet(t *testing.T) {
 		faasProcess: "env",
 		cgiHeaders:  true,
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -148,7 +152,8 @@ func TestHandler_HostHeader_Empty_WhenNotSet(t *testing.T) {
 		faasProcess: "env",
 		cgiHeaders:  true,
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -183,7 +188,8 @@ func TestHandler_StderrWritesToStderr_CombinedOutput_False(t *testing.T) {
 		combineOutput: false,
 	}
 
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusInternalServerError
@@ -224,7 +230,8 @@ func TestHandler_StderrWritesToResponse_CombinedOutput_True(t *testing.T) {
 		combineOutput: true,
 	}
 
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusInternalServerError
@@ -271,7 +278,8 @@ func TestHandler_DoesntHaveCustomHeaderInFunction_WithoutCgi_Mode(t *testing.T) 
 		faasProcess: "env",
 		cgiHeaders:  false,
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -305,7 +313,8 @@ func TestHandler_HasXDurationSecondsHeader(t *testing.T) {
 	config := WatchdogConfig{
 		faasProcess: "cat",
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -337,7 +346,8 @@ func TestHandler_RequestTimeoutFailsForExceededDuration(t *testing.T) {
 			execTimeout: time.Duration(100) * time.Millisecond,
 		}
 
-		handler := makeRequestHandler(&config)
+		readyTime := time.Now()
+		handler := makeRequestHandler(&config, &readyTime)
 		handler(rr, req)
 
 		required := http.StatusRequestTimeout
@@ -363,7 +373,8 @@ func TestHandler_StatusOKAllowed_ForWriteableVerbs(t *testing.T) {
 		config := WatchdogConfig{
 			faasProcess: "cat",
 		}
-		handler := makeRequestHandler(&config)
+		readyTime := time.Now()
+		handler := makeRequestHandler(&config, &readyTime)
 		handler(rr, req)
 
 		required := http.StatusOK
@@ -389,7 +400,8 @@ func TestHandler_StatusMethodNotAllowed_ForUnknown(t *testing.T) {
 	}
 
 	config := WatchdogConfig{}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusMethodNotAllowed
@@ -412,7 +424,8 @@ func TestHandler_StatusOKForGETAndNoBody(t *testing.T) {
 		faasProcess: "date",
 	}
 
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
@@ -507,7 +520,8 @@ func TestHandler_HasFullPathAndQueryInFunction_WithCgi_Mode(t *testing.T) {
 		faasProcess: "env",
 		cgiHeaders:  true,
 	}
-	handler := makeRequestHandler(&config)
+	readyTime := time.Now()
+	handler := makeRequestHandler(&config, &readyTime)
 	handler(rr, req)
 
 	required := http.StatusOK
