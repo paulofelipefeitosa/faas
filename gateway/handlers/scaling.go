@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/openfaas/faas/gateway/scaling"
 )
@@ -21,6 +22,8 @@ func MakeScalingHandler(next http.HandlerFunc, config scaling.ScalingConfig) htt
 	scaler := scaling.NewFunctionScaler(config)
 
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		scaleStartTs := time.Now()
 
 		functionName := getServiceName(r.URL.String())
 		res := scaler.Scale(functionName)
@@ -42,6 +45,8 @@ func MakeScalingHandler(next http.HandlerFunc, config scaling.ScalingConfig) htt
 			w.Write([]byte(errStr))
 			return
 		}
+
+		w.Header().Add("X-Scale-Start-Time", fmt.Sprintf("%d", scaleStartTs.UTC().UnixNano()))
 
 		if res.Available {
 			next.ServeHTTP(w, r)

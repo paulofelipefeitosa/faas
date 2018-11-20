@@ -68,7 +68,6 @@ func (s ExternalServiceQuery) GetReplicas(serviceName string) (scaling.ServiceQu
 	function := requests.Function{}
 
 	urlPath := fmt.Sprintf("%ssystem/function/%s", s.URL.String(), serviceName)
-
 	req, _ := http.NewRequest(http.MethodGet, urlPath, nil)
 
 	if s.Credentials != nil {
