@@ -25,8 +25,11 @@ func MakeScalingHandler(next http.HandlerFunc, config scaling.ScalingConfig) htt
 
 		scaleStartTs := time.Now()
 
+		log.Printf("Getting service name")
 		functionName := getServiceName(r.URL.String())
+		log.Printf("Check function scale")
 		res := scaler.Scale(functionName)
+		log.Printf("Add headers..")
 
 		if !res.Found {
 			errStr := fmt.Sprintf("error finding function %s: %s", functionName, res.Error.Error())
@@ -46,9 +49,16 @@ func MakeScalingHandler(next http.HandlerFunc, config scaling.ScalingConfig) htt
 			return
 		}
 
+		log.Printf("Adding start and post scale timestamps on request header")
+
 		w.Header().Add("X-Scale-Start-Time", fmt.Sprintf("%d", scaleStartTs.UTC().UnixNano()))
+		r.Header.Add("X-Scale-Start-Time", fmt.Sprintf("%d", scaleStartTs.UTC().UnixNano()))
+
 		w.Header().Add("X-Scale-Post-Send-Time", res.SendSetReplicasTs)
+		r.Header.Add("X-Scale-Post-Send-Time", res.SendSetReplicasTs)
+
 		w.Header().Add("X-Scale-Post-Response-Time", res.ResponseSetReplicasTs)
+		r.Header.Add("X-Scale-Post-Response-Time", res.ResponseSetReplicasTs)
 
 		if res.Available {
 			next.ServeHTTP(w, r)
