@@ -47,6 +47,8 @@ func MakeScalingHandler(next http.HandlerFunc, config scaling.ScalingConfig) htt
 		}
 
 		w.Header().Add("X-Scale-Start-Time", fmt.Sprintf("%d", scaleStartTs.UTC().UnixNano()))
+		w.Header().Add("X-Scale-Post-Send-Time", res.SendSetReplicasTs)
+		w.Header().Add("X-Scale-Post-Response-Time", res.ResponseSetReplicasTs)
 
 		if res.Available {
 			next.ServeHTTP(w, r)

@@ -85,7 +85,7 @@ func scaleService(alert requests.PrometheusInnerAlert, service scaling.ServiceQu
 				return nil
 			}
 
-			updateErr := service.SetReplicas(serviceName, newReplicas)
+			_, _, updateErr := service.SetReplicas(serviceName, newReplicas)
 			if updateErr != nil {
 				err = updateErr
 			}

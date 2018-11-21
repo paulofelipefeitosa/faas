@@ -28,10 +28,12 @@ type FunctionScaler struct {
 
 // FunctionScaleResult holds the result of scaling from zero
 type FunctionScaleResult struct {
-	Available bool
-	Error     error
-	Found     bool
-	Duration  time.Duration
+	Available             bool
+	Error                 error
+	Found                 bool
+	Duration              time.Duration
+	SendSetReplicasTs     string
+	ResponseSetReplicasTs string
 }
 
 // Scale scales a function from zero replicas to 1 or the value set in
@@ -42,10 +44,12 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 	if cachedResponse, hit := f.Cache.Get(functionName); hit &&
 		cachedResponse.AvailableReplicas > 0 {
 		return FunctionScaleResult{
-			Error:     nil,
-			Available: true,
-			Found:     true,
-			Duration:  time.Since(start),
+			Error:                 nil,
+			Available:             true,
+			Found:                 true,
+			Duration:              time.Since(start),
+			SendSetReplicasTs:     "",
+			ResponseSetReplicasTs: "",
 		}
 	}
 
@@ -53,12 +57,17 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 
 	if err != nil {
 		return FunctionScaleResult{
-			Error:     err,
-			Available: false,
-			Found:     false,
-			Duration:  time.Since(start),
+			Error:                 err,
+			Available:             false,
+			Found:                 false,
+			Duration:              time.Since(start),
+			SendSetReplicasTs:     "",
+			ResponseSetReplicasTs: "",
 		}
 	}
+
+	var sendSetReplicasTs string
+	var responseSetReplicasTs string
 
 	f.Cache.Set(functionName, queryResponse)
 
@@ -81,10 +90,13 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 			}
 
 			log.Printf("[Scale %d] function=%s 0 => %d requested", attempt, functionName, minReplicas)
-			setScaleErr := f.Config.ServiceQuery.SetReplicas(functionName, minReplicas)
+			sendPostTs, responsePostTs, setScaleErr := f.Config.ServiceQuery.SetReplicas(functionName, minReplicas)
 			if setScaleErr != nil {
 				return fmt.Errorf("unable to scale function [%s], err: %s", functionName, setScaleErr)
 			}
+
+			sendSetReplicasTs = sendPostTs
+			responseSetReplicasTs = responsePostTs
 
 			return nil
 
@@ -92,10 +104,12 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 
 		if scaleResult != nil {
 			return FunctionScaleResult{
-				Error:     scaleResult,
-				Available: false,
-				Found:     true,
-				Duration:  time.Since(start),
+				Error:                 scaleResult,
+				Available:             false,
+				Found:                 true,
+				Duration:              time.Since(start),
+				SendSetReplicasTs:     "",
+				ResponseSetReplicasTs: "",
 			}
 		}
 
@@ -108,10 +122,12 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 
 			if err != nil {
 				return FunctionScaleResult{
-					Error:     err,
-					Available: false,
-					Found:     true,
-					Duration:  totalTime,
+					Error:                 err,
+					Available:             false,
+					Found:                 true,
+					Duration:              totalTime,
+					SendSetReplicasTs:     "",
+					ResponseSetReplicasTs: "",
 				}
 			}
 
@@ -121,10 +137,12 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 					functionName, queryResponse.AvailableReplicas, totalTime.Seconds())
 
 				return FunctionScaleResult{
-					Error:     nil,
-					Available: true,
-					Found:     true,
-					Duration:  totalTime,
+					Error:                 nil,
+					Available:             true,
+					Found:                 true,
+					Duration:              totalTime,
+					SendSetReplicasTs:     sendSetReplicasTs,
+					ResponseSetReplicasTs: responseSetReplicasTs,
 				}
 			}
 
@@ -133,10 +151,12 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 	}
 
 	return FunctionScaleResult{
-		Error:     nil,
-		Available: true,
-		Found:     true,
-		Duration:  time.Since(start),
+		Error:                 nil,
+		Available:             true,
+		Found:                 true,
+		Duration:              time.Since(start),
+		SendSetReplicasTs:     "",
+		ResponseSetReplicasTs: "",
 	}
 }
 
