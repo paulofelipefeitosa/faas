@@ -137,11 +137,10 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) (str
 		return "", "", err
 	}
 
+	log.Printf("Applying request")
+
 	urlPath := fmt.Sprintf("%ssystem/scale-function/%s", s.URL.String(), serviceName)
 	req, _ := http.NewRequest(http.MethodPost, urlPath, bytes.NewReader(requestBody))
-
-	sendPostTs := req.Header.Get("X-Scale-Post-Send-Time")
-	responsePostTs := req.Header.Get("X-Scale-Post-Response-Time")
 
 	if s.Credentials != nil {
 		req.SetBasicAuth(s.Credentials.User, s.Credentials.Password)
@@ -149,6 +148,11 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) (str
 
 	defer req.Body.Close()
 	res, err := s.ProxyClient.Do(req)
+
+	log.Printf("Getting req header")
+
+	sendPostTs := req.Header.Get("X-Scale-Post-Send-Time")
+	responsePostTs := req.Header.Get("X-Scale-Post-Response-Time")
 
 	if err != nil {
 		log.Println(urlPath, err)
