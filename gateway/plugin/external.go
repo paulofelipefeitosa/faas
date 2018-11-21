@@ -149,10 +149,10 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) (str
 	defer req.Body.Close()
 	res, err := s.ProxyClient.Do(req)
 
-	log.Printf("Getting req header")
-
 	sendPostTs := res.Header.Get("X-Scale-Post-Send-Time")
 	responsePostTs := res.Header.Get("X-Scale-Post-Response-Time")
+
+	log.Printf("Values in header %s %s", sendPostTs, responsePostTs)
 
 	if err != nil {
 		log.Println(urlPath, err)
