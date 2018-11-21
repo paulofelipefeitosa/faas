@@ -151,8 +151,8 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) (str
 
 	log.Printf("Getting req header")
 
-	sendPostTs := req.Header.Get("X-Scale-Post-Send-Time")
-	responsePostTs := req.Header.Get("X-Scale-Post-Response-Time")
+	sendPostTs := res.Header.Get("X-Scale-Post-Send-Time")
+	responsePostTs := res.Header.Get("X-Scale-Post-Response-Time")
 
 	if err != nil {
 		log.Println(urlPath, err)

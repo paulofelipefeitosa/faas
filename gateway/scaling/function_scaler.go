@@ -91,7 +91,7 @@ func (f *FunctionScaler) Scale(functionName string) FunctionScaleResult {
 
 			log.Printf("[Scale %d] function=%s 0 => %d requested", attempt, functionName, minReplicas)
 			sendPostTs, responsePostTs, setScaleErr := f.Config.ServiceQuery.SetReplicas(functionName, minReplicas)
-			log.Printf("Values %d %d", sendPostTs, responsePostTs)
+			log.Printf("Values %s %s", sendPostTs, responsePostTs)
 
 			if setScaleErr != nil {
 				return fmt.Errorf("unable to scale function [%s], err: %s", functionName, setScaleErr)
