@@ -60,6 +60,7 @@ func main() {
 
 	log.Printf("Read/write timeout: %s, %s. Port: %d\n", readTimeout, writeTimeout, config.port)
 	readyTime := time.Now()
+	log.Printf("Initial Ready Time %d", readyTime.UTC().UnixNano())
 	http.HandleFunc("/_/health", makeHealthHandler())
 	http.HandleFunc("/", makeRequestHandler(&config, &readyTime))
 
@@ -118,8 +119,6 @@ func listenUntilShutdown(shutdownTimeout time.Duration, s *http.Server, suppress
 			log.Printf("Error ListenAndServe: %v", err)
 			close(idleConnsClosed)
 		}
-		*readyTime = time.Now()
-		log.Printf("Server running... %d", readyTime.UTC().UnixNano())
 	}()
 
 	if suppressLock == false {
