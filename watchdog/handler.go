@@ -59,7 +59,7 @@ func debugHeaders(source *http.Header, direction string) {
 	}
 }
 
-func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request, method string) {
+func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request, method string, readyTime *time.Time) {
 	startTime := time.Now()
 
 	parts := strings.Split(config.faasProcess, " ")
@@ -71,6 +71,8 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 	}
 
 	log.Println("Forking fprocess.")
+
+	forkTime := time.Now()
 
 	targetCmd := exec.Command(parts[0], parts[1:]...)
 
@@ -135,12 +137,17 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 		writer.Close()
 	}()
 
+	var execStartupTime time.Time
+	var execEndTime time.Time
+
 	if config.combineOutput {
 		// Read the output from stdout/stderr and combine into one variable for output.
 		go func() {
 			defer wg.Done()
 
+			execStartupTime = time.Now()
 			out, err = targetCmd.CombinedOutput()
+			execEndTime = time.Now()
 		}()
 	} else {
 		go func() {
@@ -149,7 +156,10 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 
 			defer wg.Done()
 
+			execStartupTime = time.Now()
 			out, err = targetCmd.Output()
+			execEndTime = time.Now()
+
 			if b.Len() > 0 {
 				log.Printf("stderr: %s", b.Bytes())
 			}
@@ -158,6 +168,7 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 	}
 
 	wg.Wait()
+	functionExecutionTs := time.Now()
 	if timer != nil {
 		timer.Stop()
 	}
@@ -201,7 +212,13 @@ func pipeRequest(config *WatchdogConfig, w http.ResponseWriter, r *http.Request,
 
 	execDuration := time.Since(startTime).Seconds()
 	if ri.headerWritten == false {
+		w.Header().Set("X-Watchdog-Startup-Time", fmt.Sprintf("%d", readyTime.UTC().UnixNano()))
+		w.Header().Set("X-Prepare-Fork-Time", fmt.Sprintf("%d", forkTime.UTC().UnixNano()))
+		w.Header().Set("X-Fork-Startup-Time", fmt.Sprintf("%d", execStartupTime.UTC().UnixNano()))
+		w.Header().Set("X-Fork-End-Time", fmt.Sprintf("%d", execEndTime.UTC().UnixNano()))
+		w.Header().Set("X-Wait-Time", fmt.Sprintf("%d", functionExecutionTs.UTC().UnixNano()))
 		w.Header().Set("X-Duration-Seconds", fmt.Sprintf("%f", execDuration))
+
 		ri.headerWritten = true
 		w.WriteHeader(200)
 		w.Write(out)
@@ -295,7 +312,7 @@ func makeHealthHandler() func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func makeRequestHandler(config *WatchdogConfig) func(http.ResponseWriter, *http.Request) {
+func makeRequestHandler(config *WatchdogConfig, readyTime *time.Time) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case
@@ -304,7 +321,7 @@ func makeRequestHandler(config *WatchdogConfig) func(http.ResponseWriter, *http.
 			http.MethodPatch,
 			http.MethodDelete,
 			http.MethodGet:
-			pipeRequest(config, w, r, r.Method)
+			pipeRequest(config, w, r, r.Method, readyTime)
 			break
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)

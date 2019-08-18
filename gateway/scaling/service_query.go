@@ -6,7 +6,7 @@ package scaling
 // ServiceQuery provides interface for replica querying/setting
 type ServiceQuery interface {
 	GetReplicas(service string) (response ServiceQueryResponse, err error)
-	SetReplicas(service string, count uint64) error
+	SetReplicas(service string, count uint64) (string, string, error)
 }
 
 // ServiceQueryResponse response from querying a function status

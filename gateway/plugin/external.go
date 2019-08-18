@@ -68,7 +68,6 @@ func (s ExternalServiceQuery) GetReplicas(serviceName string) (scaling.ServiceQu
 	function := requests.Function{}
 
 	urlPath := fmt.Sprintf("%ssystem/function/%s", s.URL.String(), serviceName)
-
 	req, _ := http.NewRequest(http.MethodGet, urlPath, nil)
 
 	if s.Credentials != nil {
@@ -125,7 +124,7 @@ func (s ExternalServiceQuery) GetReplicas(serviceName string) (scaling.ServiceQu
 }
 
 // SetReplicas update the replica count
-func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) error {
+func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) (string, string, error) {
 	var err error
 
 	scaleReq := ScaleServiceRequest{
@@ -135,8 +134,10 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) erro
 
 	requestBody, err := json.Marshal(scaleReq)
 	if err != nil {
-		return err
+		return "", "", err
 	}
+
+	log.Printf("Applying request")
 
 	urlPath := fmt.Sprintf("%ssystem/scale-function/%s", s.URL.String(), serviceName)
 	req, _ := http.NewRequest(http.MethodPost, urlPath, bytes.NewReader(requestBody))
@@ -147,6 +148,11 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) erro
 
 	defer req.Body.Close()
 	res, err := s.ProxyClient.Do(req)
+
+	sendPostTs := res.Header.Get("X-Scale-Post-Send-Time")
+	responsePostTs := res.Header.Get("X-Scale-Post-Response-Time")
+
+	log.Printf("Values in header %s %s", sendPostTs, responsePostTs)
 
 	if err != nil {
 		log.Println(urlPath, err)
@@ -160,7 +166,7 @@ func (s ExternalServiceQuery) SetReplicas(serviceName string, count uint64) erro
 		err = fmt.Errorf("error scaling HTTP code %d, %s", res.StatusCode, urlPath)
 	}
 
-	return err
+	return sendPostTs, responsePostTs, err
 }
 
 // extractLabelValue will parse the provided raw label value and if it fails

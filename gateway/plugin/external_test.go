@@ -108,7 +108,7 @@ func TestSetReplicasNonExistentFn(t *testing.T) {
 	url, _ := url.Parse(testServer.URL + "/")
 	esq := NewExternalServiceQuery(*url, &creds)
 
-	err := esq.SetReplicas("burt", 1)
+	_, _, err := esq.SetReplicas("burt", 1)
 
 	expectedErrStr := "error scaling HTTP code 500"
 
@@ -130,7 +130,7 @@ func TestSetReplicasExistentFn(t *testing.T) {
 	url, _ := url.Parse(testServer.URL + "/")
 	esq := NewExternalServiceQuery(*url, &creds)
 
-	err := esq.SetReplicas("burt", 1)
+	_, _, err := esq.SetReplicas("burt", 1)
 
 	if err != nil {
 		t.Logf("Expected err to be nil got: %s ", err.Error())
