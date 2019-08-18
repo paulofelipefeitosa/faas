@@ -28,7 +28,6 @@ var (
 )
 
 func main() {
-	readyTime := time.Now()
 	flag.BoolVar(&versionFlag, "version", false, "Print the version and exit")
 
 	flag.Parse()
@@ -60,12 +59,14 @@ func main() {
 	}
 
 	log.Printf("Read/write timeout: %s, %s. Port: %d\n", readTimeout, writeTimeout, config.port)
+	readyTime := time.Now()
+	log.Printf("Initial Ready Time %d", readyTime.UTC().UnixNano())
 	http.HandleFunc("/_/health", makeHealthHandler())
 	http.HandleFunc("/", makeRequestHandler(&config, &readyTime))
 
 	shutdownTimeout := config.writeTimeout
 
-	listenUntilShutdown(shutdownTimeout, s, config.suppressLock)
+	listenUntilShutdown(shutdownTimeout, s, config.suppressLock, &readyTime)
 }
 
 func markUnhealthy() error {
@@ -81,7 +82,7 @@ func markUnhealthy() error {
 // is sent at which point the code will wait `shutdownTimeout` before
 // closing off connections and a futher `shutdownTimeout` before
 // exiting
-func listenUntilShutdown(shutdownTimeout time.Duration, s *http.Server, suppressLock bool) {
+func listenUntilShutdown(shutdownTimeout time.Duration, s *http.Server, suppressLock bool, readyTime *time.Time) {
 
 	idleConnsClosed := make(chan struct{})
 	go func() {
